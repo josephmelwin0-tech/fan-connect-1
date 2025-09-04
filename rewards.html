@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards • FanConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Inter, sans-serif;
+        }
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white font-sans">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg">
+            
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">Rewards & Wallet</h1>
+                <p class="text-gray-400">Convert points to cash or redeem them for exclusive rewards.</p>
+            </div>
+
+            <!-- Wallet Connection -->
+            <div class="flex justify-center mb-6">
+                <button id="connectButton" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors duration-300">
+                    Connect Wallet
+                </button>
+                <div id="walletInfo" class="hidden items-center gap-2 bg-green-500/20 text-green-300 px-4 py-2 rounded-lg">
+                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                    <span id="walletAddress" class="text-sm font-mono"></span>
+                </div>
+            </div>
+
+            <!-- Balances -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-[#1e293b] p-4 rounded-xl text-center">
+                    <p class="text-sm text-gray-400">Engagement Points</p>
+                    <p id="tp-balance" class="text-2xl font-semibold">0 TP</p>
+                </div>
+                <div class="bg-[#1e293b] p-4 rounded-xl text-center">
+                    <p class="text-sm text-gray-400">Wallet Balance</p>
+                    <p id="inr-balance" class="text-2xl font-semibold">₹0.00</p>
+                </div>
+            </div>
+
+            <!-- Conversion Card -->
+            <div class="bg-[#1e293b] rounded-2xl p-6 shadow mb-8">
+                <h2 class="text-lg font-semibold mb-2">Cash Out Points</h2>
+                <p class="text-sm text-gray-400 mb-4">Conversion Rate: 1 Point = ₹2.00</p>
+                <div class="flex items-center gap-4">
+                    <input type="number" id="cashOutAmount" placeholder="Enter points to convert" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="cashOutButton" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold text-nowrap flex items-center justify-center min-w-[100px]">
+                        Cash Out
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Redeem Other Rewards -->
+            <div class="text-center mb-8">
+                 <h2 class="text-2xl font-bold">Redeem Other Rewards</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-[#1e293b] rounded-2xl p-6 shadow flex flex-col items-center text-center">
+                    <h3 class="text-lg font-semibold mb-2">OTT Subscription</h3>
+                    <p class="text-gray-400 mb-4">500 TP</p>
+                    <button data-reward="OTT Subscription" data-cost="500" class="redeem-btn bg-blue-600 hover:bg-blue-700 w-full px-4 py-2 rounded-lg transition">
+                        Redeem
+                    </button>
+                </div>
+                <div class="bg-[#1e293b] rounded-2xl p-6 shadow flex flex-col items-center text-center">
+                    <h3 class="text-lg font-semibold mb-2">Mobile Recharge</h3>
+                    <p class="text-gray-400 mb-4">300 TP</p>
+                    <button data-reward="Mobile Recharge" data-cost="300" class="redeem-btn bg-blue-600 hover:bg-blue-700 w-full px-4 py-2 rounded-lg transition">
+                        Redeem
+                    </button>
+                </div>
+                <div class="bg-[#1e293b] rounded-2xl p-6 shadow flex flex-col items-center text-center">
+                    <h3 class="text-lg font-semibold mb-2">Meet Your Favorite Artist</h3>
+                    <p class="text-gray-400 mb-4">1000 TP</p>
+                    <button data-reward="Meet Artist" data-cost="1000" class="redeem-btn bg-blue-600 hover:bg-blue-700 w-full px-4 py-2 rounded-lg transition">
+                        Redeem
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- CONFIGURATION ---
+            const contractAddress = "0x4E5D6065cc00eaB640Bc877bA18a2D94be7e0EC4";
+            const contractABI = [
+                "function balanceOf(address owner) view returns (uint256)",
+                "function decimals() view returns (uint8)",
+                "function mint(address to, uint256 amount)",
+                "function burn(uint256 amount)"
+            ];
+            const POINT_TO_INR_RATE = 2;
+
+            // --- STATE VARIABLES ---
+            let provider, signer, contract, account;
+
+            // --- DOM ELEMENTS ---
+            const connectButton = document.getElementById("connectButton");
+            const walletInfo = document.getElementById("walletInfo");
+            const walletAddressEl = document.getElementById("walletAddress");
+            const tpBalanceEl = document.getElementById("tp-balance");
+            const inrBalanceEl = document.getElementById("inr-balance");
+            const cashOutAmountInput = document.getElementById("cashOutAmount");
+            const cashOutButton = document.getElementById("cashOutButton");
+
+            // --- FUNCTIONS ---
+
+            async function connectWallet() {
+                if (!window.ethereum) {
+                    alert("MetaMask is not installed. Please install it to continue.");
+                    return;
+                }
+
+                connectButton.disabled = true;
+                connectButton.innerHTML = '<div class="loader"></div><span>Connecting...</span>';
+
+                try {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    account = await signer.getAddress();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                    connectButton.classList.add("hidden");
+                    walletInfo.classList.remove("hidden");
+                    walletInfo.classList.add("flex");
+                    walletAddressEl.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+                    
+                    await updateBalance();
+                } catch (err) {
+                    console.error("Failed to connect wallet:", err);
+                    alert("Failed to connect wallet. Please try again.");
+                    connectButton.classList.remove("hidden");
+                } finally {
+                    connectButton.disabled = false;
+                    connectButton.innerHTML = 'Connect Wallet';
+                }
+            }
+
+            async function updateBalance() {
+                const currentInrBalance = parseFloat(localStorage.getItem('inrWalletBalance') || '0');
+                inrBalanceEl.innerText = `₹${currentInrBalance.toFixed(2)}`;
+
+                if (!contract || !account) {
+                    tpBalanceEl.innerText = `0 TP`;
+                    return;
+                }
+
+                try {
+                    const rawBalance = await contract.balanceOf(account);
+                    const decimals = await contract.decimals();
+                    const formattedBalance = parseFloat(ethers.utils.formatUnits(rawBalance, decimals));
+                    tpBalanceEl.innerText = `${formattedBalance.toFixed(2)} TP`;
+                } catch (error) {
+                    console.error("Could not fetch points balance:", error);
+                    alert("Could not fetch your points balance.");
+                }
+            }
+
+            async function cashOutPoints() {
+                if (!account) {
+                    alert("Please connect your wallet first.");
+                    return;
+                }
+
+                const amountToCashOut = parseFloat(cashOutAmountInput.value);
+                if (isNaN(amountToCashOut) || amountToCashOut <= 0) {
+                    alert("Please enter a valid number of points to cash out.");
+                    return;
+                }
+
+                cashOutButton.disabled = true;
+                cashOutButton.innerHTML = '<div class="loader"></div>';
+
+                try {
+                    const decimals = await contract.decimals();
+                    const rawBalance = await contract.balanceOf(account);
+                    const balance = parseFloat(ethers.utils.formatUnits(rawBalance, decimals));
+
+                    if (balance < amountToCashOut) {
+                        alert("❌ Not enough Engagement Points to cash out!");
+                        return;
+                    }
+
+                    const tx = await contract.burn(ethers.utils.parseUnits(amountToCashOut.toString(), decimals));
+                    await tx.wait();
+
+                    const inrValue = amountToCashOut * POINT_TO_INR_RATE;
+                    const currentInrBalance = parseFloat(localStorage.getItem('inrWalletBalance') || '0');
+                    const newInrBalance = currentInrBalance + inrValue;
+                    localStorage.setItem('inrWalletBalance', newInrBalance.toString());
+
+                    await updateBalance();
+                    alert(`✅ Successfully converted ${amountToCashOut} TP to ₹${inrValue.toFixed(2)}!`);
+                    cashOutAmountInput.value = '';
+                } catch (err) {
+                    console.error("Cash out failed:", err);
+                    alert("❌ Cash out failed. The transaction may have been rejected.");
+                } finally {
+                    cashOutButton.disabled = false;
+                    cashOutButton.textContent = 'Cash Out';
+                }
+            }
+            
+            async function redeemReward(cost, rewardName, button) {
+                if (!account) {
+                    alert("Please connect your wallet first.");
+                    return;
+                }
+                
+                button.disabled = true;
+                button.textContent = "Redeeming...";
+
+                try {
+                    const decimals = await contract.decimals();
+                    const rawBalance = await contract.balanceOf(account);
+                    const balance = parseFloat(ethers.utils.formatUnits(rawBalance, decimals));
+
+                    if (balance < cost) {
+                        alert("❌ Not enough Engagement Points!");
+                        return;
+                    }
+
+                    const tx = await contract.burn(ethers.utils.parseUnits(cost.toString(), decimals));
+                    await tx.wait();
+                    
+                    await updateBalance();
+                    alert(`✅ Successfully redeemed: ${rewardName}`);
+
+                } catch (err) {
+                    console.error("Redemption failed:", err);
+                    alert("❌ Redemption failed.");
+                } finally {
+                    button.disabled = false;
+                    button.textContent = "Redeem";
+                }
+            }
+
+            // --- EVENT BINDING ---
+            connectButton.addEventListener("click", connectWallet);
+            cashOutButton.addEventListener("click", cashOutPoints);
+            
+            document.querySelectorAll(".redeem-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const cost = parseInt(btn.dataset.cost);
+                    const reward = btn.dataset.reward;
+                    redeemReward(cost, reward, btn);
+                });
+            });
+            
+            // Initial UI update
+            updateBalance();
+        });
+    </script>
+</body>
+</html>

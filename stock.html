@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Stock Market Simulation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js and Date Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS STYLES -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* A slightly darker slate background */
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6); /* Semi-transparent dark card */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Style for the active timeframe button on the chart */
+        .active-timeframe {
+            background-color: #4f46e5; /* Indigo */
+            color: #f1f5f9;
+        }
+        /* Styling for the trade modal */
+        #tradeModal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #tradeModal.hidden {
+            visibility: hidden;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="text-gray-200 antialiased">
+
+    <!-- MAIN CONTAINER -->
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div id="main-header" class="flex items-center mb-4 md:mb-0">
+                <!-- This part will be updated by JS -->
+                <div class="w-16 h-16 rounded-full bg-gray-700 animate-pulse mr-4"></div>
+                <div>
+                    <div class="h-8 w-48 bg-gray-700 rounded animate-pulse"></div>
+                    <div class="h-4 w-32 bg-gray-700 rounded mt-2 animate-pulse"></div>
+                </div>
+            </div>
+            <div class="flex items-center w-full md:w-auto space-x-4">
+                <button id="openBuyModal" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Buy</button>
+                <button id="openSellModal" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed" disabled>Sell</button>
+            </div>
+        </header>
+
+        <!-- MAIN GRID LAYOUT -->
+        <main class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Left Column: Watchlist & Portfolio -->
+            <aside class="lg:col-span-1 space-y-8">
+                <div class="glass-card p-4">
+                    <h2 class="text-xl font-bold mb-4 text-white px-2">Artists Watchlist</h2>
+                    <ul id="artistList" class="space-y-2 max-h-[40vh] overflow-y-auto">
+                        <!-- Artist list populated by JS -->
+                    </ul>
+                </div>
+
+                <div id="myStocksSection" class="glass-card p-4 hidden">
+                    <h2 class="text-xl font-bold mb-4 text-white px-2">My Stocks</h2>
+                    <ul id="myStocksList" class="space-y-2">
+                        <!-- User's stocks will be populated here -->
+                    </ul>
+                </div>
+                
+                <div class="glass-card p-6">
+                    <h2 class="text-xl font-bold mb-4 text-white">My Account</h2>
+                    <div class="space-y-3">
+                         <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Balance</span>
+                            <span id="accountBalance" class="font-semibold text-lg text-green-400">₹10,000.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Portfolio Value</span>
+                            <span id="portfolioValue" class="font-semibold text-lg text-indigo-400">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Total P/L</span>
+                            <span id="totalPL" class="font-semibold text-lg text-gray-400">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="glass-card p-4">
+                    <h2 class="text-xl font-bold mb-4 text-white px-2">Top Movers (24h)</h2>
+                    <ul id="leaderboardList" class="space-y-3">
+                        <!-- Leaderboard will be populated here -->
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Right Content: Stock Details -->
+            <div id="stockDetails" class="lg:col-span-3 space-y-8 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Left Column: Current Price & Performance -->
+                    <div class="md:col-span-1 space-y-8">
+                        <div class="glass-card p-6">
+                            <p class="text-gray-400 text-sm">Current Price</p>
+                            <div class="flex items-baseline space-x-3 mt-1">
+                                <p id="stockPrice" class="text-4xl font-bold text-white"></p>
+                                <p id="stockChange" class="text-lg font-semibold flex items-center"></p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h2 class="text-xl font-semibold mb-4 text-white">Performance</h2>
+                            <div class="space-y-4">
+                                <!-- 24h Performance Bar -->
+                                <div class="py-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-400">24h Low</span>
+                                        <span class="text-gray-400">24h High</span>
+                                    </div>
+                                    <div class="relative h-2 bg-gray-700 rounded-full my-1">
+                                        <div id="currentPriceIndicator" class="absolute w-4 h-4 bg-white rounded-full -mt-1 border-2 border-indigo-500" style="left: 50%;"></div>
+                                    </div>
+                                    <div class="flex justify-between text-sm mt-1">
+                                        <span id="low24h" class="font-semibold text-white">₹0.00</span>
+                                        <span id="high24h" class="font-semibold text-white">₹0.00</span>
+                                    </div>
+                                </div>
+                                <div id="userHoldingStats">
+                                    <!-- User specific P/L stats will be injected here -->
+                                </div>
+                                <div class="flex justify-between py-2 border-t border-gray-700">
+                                    <span class="text-gray-400">All-time High</span>
+                                    <div id="allTimeHigh" class="text-right"></div>
+                                </div>
+                                <div class="flex justify-between py-2">
+                                    <span class="text-gray-400">All-time Low</span>
+                                    <div id="allTimeLow" class="text-right"></div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="glass-card p-6">
+                            <h2 class="text-xl font-semibold mb-4 text-white">Social Links</h2>
+                            <div id="socialLinks" class="flex items-center space-x-4">
+                                <!-- Social links will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right Column: Chart -->
+                    <div class="md:col-span-2 glass-card p-4 md:p-6">
+                        <div class="flex flex-wrap items-center justify-between mb-4">
+                            <h2 class="text-xl font-semibold text-white mr-4 mb-2 sm:mb-0">Price History</h2>
+                            <div id="timeframe-controls" class="flex items-center bg-gray-700 rounded-lg p-1 space-x-1">
+                                <button data-range="1D" class="px-3 py-1 text-sm font-medium rounded-md active-timeframe">24H</button>
+                                <button data-range="7D" class="px-3 py-1 text-sm font-medium rounded-md">7D</button>
+                                <button data-range="1M" class="px-3 py-1 text-sm font-medium rounded-md">1M</button>
+                                <button data-range="1Y" class="px-3 py-1 text-sm font-medium rounded-md">1Y</button>
+                                <button data-range="ALL" class="px-3 py-1 text-sm font-medium rounded-md">ALL</button>
+                            </div>
+                        </div>
+                        <div class="relative h-96">
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Placeholder when no artist is selected -->
+            <div id="placeholder" class="lg:col-span-3 glass-card p-12 text-center h-full flex flex-col justify-center items-center">
+                <svg class="w-16 h-16 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                <h2 class="text-2xl font-bold text-white">Select an Artist</h2>
+                <p class="text-gray-400 mt-2">Choose an artist from the watchlist to view their performance and trade.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden">
+        <div class="glass-card p-8 rounded-2xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold text-white"></h2>
+                <button id="closeModal" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p>Available Balance: <span id="modalBalance" class="font-semibold text-green-400"></span></p>
+                <p>Current Price: <span id="modalPrice" class="font-semibold text-white"></span></p>
+                <p>Shares Owned: <span id="modalShares" class="font-semibold text-white"></span></p>
+                <input type="number" id="tradeAmount" placeholder="Enter amount of shares" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                
+                <div class="space-y-1 text-sm">
+                    <div class="flex justify-between items-center text-gray-400">
+                        <span>Subtotal:</span>
+                        <span id="subTotalCost">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-400">
+                        <span>Transaction Fee:</span>
+                        <span id="transactionFee">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center font-semibold text-lg border-t border-gray-600 pt-3 mt-3">
+                    <span id="totalLabel">Total Cost:</span>
+                    <span id="totalCost">₹0.00</span>
+                </div>
+                <button id="confirmTrade" class="w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-24 opacity-0 transition-all duration-300">
+        <p id="toastMessage"></p>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DATA GENERATION & SETUP ---
+            const generateHistoryData = (timeframe, basePrice) => {
+                let count, unit, volatility;
+                const now = new Date();
+                const data = [];
+
+                switch (timeframe) {
+                    case '1D': count = 24; unit = 'hour'; volatility = 0.05; break;
+                    case '7D': count = 7; unit = 'day'; volatility = 0.1; break;
+                    case '1M': count = 30; unit = 'day'; volatility = 0.15; break;
+                    case '1Y': count = 12; unit = 'month'; volatility = 0.3; break;
+                    case 'ALL': count = 36; unit = 'month'; volatility = 0.4; break;
+                }
+                
+                let price = basePrice / (1 + (Math.random() - 0.5) * volatility);
+
+                for (let i = 0; i < count; i++) {
+                    const date = new Date(now);
+                    if (unit === 'hour') date.setHours(now.getHours() - (count - 1 - i));
+                    if (unit === 'day') date.setDate(now.getDate() - (count - 1 - i));
+                    if (unit === 'month') date.setMonth(now.getMonth() - (count - 1 - i));
+                    
+                    price *= 1 + (Math.random() - 0.5) * volatility / Math.sqrt(count);
+                    if (price <= 0.01) price = 0.01;
+                    data.push({ x: date, y: price });
+                }
+                data[data.length - 1].y = basePrice;
+                return { data, unit };
+            };
+
+            const createArtistData = (id, name, symbol, price, socials) => {
+                const history = {};
+                ['1D', '7D', '1M', '1Y', 'ALL'].forEach(tf => {
+                    history[tf] = generateHistoryData(tf, price);
+                });
+                const allPrices = history['ALL'].data.map(p => p.y);
+                const prices24h = history['1D'].data.map(p => p.y);
+                const startPrice24h = prices24h.length > 0 ? prices24h[0] : price;
+
+                return {
+                    id, name, symbol, price, socials,
+                    stats: {
+                        allTimeHigh: Math.max(...allPrices, price),
+                        allTimeLow: Math.min(...allPrices, price),
+                        low24h: Math.min(...prices24h, price),
+                        high24h: Math.max(...prices24h, price),
+                        change24h: ((price - startPrice24h) / startPrice24h) * 100
+                    },
+                    history
+                };
+            };
+
+            let artistsData = [
+                createArtistData(1, "Hanumankind", "HNKD", 75.50, { x: "https://x.com/hanumankind", instagram: "https://instagram.com/hanumankind", youtube: "https://youtube.com/c/hanumankind" }),
+                createArtistData(2, "Samay Raina", "SMRN", 110.20, { x: "https://x.com/samayraina", instagram: "https://instagram.com/samayraina", youtube: "https://youtube.com/c/samayraina" }),
+                createArtistData(3, "Raghav Juyal", "RGJV", 95.80, { x: "https://x.com/raghavjuyal", instagram: "https://instagram.com/raghavjuyal", youtube: "https://youtube.com/c/raghavjuyal" }),
+                createArtistData(4, "Falguni Nayar", "FNYR", 162.30, { x: "https://x.com/MyNykaa", instagram: "https://instagram.com/nykaabeauty", youtube: "https://youtube.com/c/nykaa" }),
+                createArtistData(5, "Manish Malhotra", "MNMH", 145.60, { x: "https://x.com/ManishMalhotra", instagram: "https://instagram.com/manishmalhotra05", youtube: "https://youtube.com/c/ManishMalhotra" }),
+                createArtistData(6, "Sunil Chhetri", "SNCH", 138.90, { x: "https://x.com/chetrisunil11", instagram: "https://instagram.com/chetri_sunil11", youtube: "https://www.youtube.com/channel/UCG1Dyv8hQNjBUWeS_a23f-Q" })
+            ];
+
+            // --- STATE & DOM ELEMENTS ---
+            let accountBalance = 10000;
+            let portfolio = {}; // { id: { shares: number, totalCost: number } }
+            let activeArtistId = null;
+            let priceChart = null;
+            const FLAT_FEE = 20;
+            const PERCENTAGE_FEE = 0.0033;
+
+            const $ = (selector) => document.getElementById(selector);
+            const elements = {
+                artistList: $('artistList'), myStocksSection: $('myStocksSection'), myStocksList: $('myStocksList'),
+                accountBalance: $('accountBalance'), portfolioValue: $('portfolioValue'), totalPL: $('totalPL'),
+                leaderboardList: $('leaderboardList'), stockDetails: $('stockDetails'), placeholder: $('placeholder'), 
+                mainHeader: $('main-header'), stockPrice: $('stockPrice'), stockChange: $('stockChange'),
+                userHoldingStats: $('userHoldingStats'), allTimeHigh: $('allTimeHigh'), allTimeLow: $('allTimeLow'), 
+                socialLinks: $('socialLinks'), timeframeControls: $('timeframe-controls'), stockChart: $('stockChart'), 
+                currentPriceIndicator: $('currentPriceIndicator'), low24h: $('low24h'), high24h: $('high24h'), 
+                openBuyModal: $('openBuyModal'), openSellModal: $('openSellModal'), tradeModal: $('tradeModal'), 
+                closeModal: $('closeModal'), modalTitle: $('modalTitle'), modalBalance: $('modalBalance'),
+                modalPrice: $('modalPrice'), modalShares: $('modalShares'), tradeAmount: $('tradeAmount'),
+                subTotalCost: $('subTotalCost'), transactionFee: $('transactionFee'), totalLabel: $('totalLabel'), 
+                totalCost: $('totalCost'), confirmTrade: $('confirmTrade'), toast: $('toast'), toastMessage: $('toastMessage')
+            };
+            const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+            
+            // --- RENDER FUNCTIONS ---
+            const renderArtistList = () => {
+                elements.artistList.innerHTML = '';
+                artistsData.forEach(artist => {
+                    const isPositive = artist.stats.change24h >= 0;
+                    const changeColor = isPositive ? 'text-green-400' : 'text-red-400';
+                    const li = document.createElement('li');
+                    li.className = `p-3 rounded-lg cursor-pointer transition duration-300 flex justify-between items-center ${activeArtistId === artist.id ? 'bg-indigo-600 shadow-lg' : 'hover:bg-gray-700'}`;
+                    li.innerHTML = `
+                        <div><p class="font-bold text-white">${artist.name}</p><p class="text-sm text-gray-400">${artist.symbol}</p></div>
+                        <div class="text-right"><p class="font-semibold text-white">${currencyFormatter.format(artist.price)}</p><p class="text-sm font-medium ${changeColor}">${isPositive ? '+' : ''}${artist.stats.change24h.toFixed(2)}%</p></div>`;
+                    li.addEventListener('click', () => selectArtist(artist.id));
+                    elements.artistList.appendChild(li);
+                });
+            };
+
+            const renderMyStocks = () => {
+                elements.myStocksList.innerHTML = '';
+                const ownedStocks = Object.keys(portfolio).filter(id => portfolio[id] && portfolio[id].shares > 0);
+
+                if (ownedStocks.length > 0) {
+                    elements.myStocksSection.classList.remove('hidden');
+                    ownedStocks.forEach(id => {
+                        const artist = artistsData.find(a => a.id == id);
+                        const holding = portfolio[id];
+                        const marketValue = artist.price * holding.shares;
+                        const pl = marketValue - holding.totalCost;
+                        const isProfit = pl >= 0;
+                        const plColor = isProfit ? 'text-green-400' : 'text-red-400';
+
+                        const li = document.createElement('li');
+                        li.className = 'p-3 rounded-lg hover:bg-gray-700 cursor-pointer';
+                        li.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div><p class="font-bold text-white">${artist.name}</p><p class="text-sm text-gray-400">${holding.shares} shares</p></div>
+                                <div class="text-right"><p class="font-semibold text-white">${currencyFormatter.format(marketValue)}</p><p class="text-sm font-medium ${plColor}">${isProfit ? '+' : ''}${currencyFormatter.format(pl)}</p></div>
+                            </div>`;
+                        li.addEventListener('click', () => selectArtist(artist.id));
+                        elements.myStocksList.appendChild(li);
+                    });
+                } else {
+                    elements.myStocksSection.classList.add('hidden');
+                }
+            };
+
+            const renderLeaderboard = () => {
+                elements.leaderboardList.innerHTML = '';
+                const topMovers = [...artistsData].sort((a, b) => b.stats.change24h - a.stats.change24h).slice(0, 3);
+                topMovers.forEach((artist, index) => {
+                    const isPositive = artist.stats.change24h >= 0;
+                    const changeColor = isPositive ? 'text-green-400' : 'text-red-400';
+                    const li = document.createElement('li');
+                    li.className = 'p-3 rounded-lg flex items-center justify-between';
+                    li.innerHTML = `
+                        <div class="flex items-center"><span class="text-lg font-bold mr-3">${index + 1}</span>
+                        <div><p class="font-bold text-white">${artist.name}</p><p class="text-sm text-gray-400">${artist.symbol}</p></div></div>
+                        <span class="font-semibold ${changeColor}">${isPositive ? '+' : ''}${artist.stats.change24h.toFixed(2)}%</span>`;
+                    elements.leaderboardList.appendChild(li);
+                });
+            };
+
+            const renderArtistDetails = () => {
+                if (!activeArtistId) {
+                    elements.stockDetails.classList.add('hidden');
+                    elements.placeholder.classList.remove('hidden');
+                    [elements.openBuyModal, elements.openSellModal].forEach(b => b.disabled = true);
+                    return;
+                }
+                const artist = artistsData.find(a => a.id === activeArtistId);
+                if (!artist) return;
+                
+                elements.placeholder.classList.add('hidden');
+                elements.stockDetails.classList.remove('hidden');
+                [elements.openBuyModal, elements.openSellModal].forEach(b => b.disabled = false);
+
+                // Header
+                elements.mainHeader.innerHTML = `<img src="https://placehold.co/64x64/7e22ce/ffffff?text=${artist.symbol[0]}" alt="${artist.name} Avatar" class="w-16 h-16 rounded-full mr-4 border-2 border-purple-500"><div><h1 class="text-3xl font-bold text-white flex items-center">${artist.name}<span class="text-sm font-medium text-gray-400 bg-gray-700 rounded-md px-2 py-1 ml-3">${artist.symbol}</span></h1><p class="text-gray-400">by a visionary creator</p></div>`;
+
+                // Price & Stats
+                const isPositive = artist.stats.change24h >= 0;
+                const changeColor = isPositive ? 'text-green-400' : 'text-red-400';
+                elements.stockPrice.textContent = currencyFormatter.format(artist.price);
+                elements.stockChange.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="${isPositive ? 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z' : 'M10 2a8 8 0 100 16 8 8 0 000-16zM7.293 8.293a1 1 0 011.414 0L10 9.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z'}" clip-rule="evenodd" /></svg>${isPositive ? '+' : ''}${artist.stats.change24h.toFixed(2)}% <span class="text-gray-400 text-sm ml-2">(24h)</span>`;
+                elements.stockChange.className = `text-lg font-semibold flex items-center ${changeColor}`;
+                
+                // User Holding Stats
+                const userHolding = portfolio[artist.id];
+                if (userHolding && userHolding.shares > 0) {
+                    const avgPrice = userHolding.totalCost / userHolding.shares;
+                    const pl = (artist.price - avgPrice) * userHolding.shares;
+                    const plColor = pl >= 0 ? 'text-green-400' : 'text-red-400';
+                    elements.userHoldingStats.innerHTML = `
+                        <div class="flex justify-between py-2 border-t border-gray-700"><span class="text-gray-400">Shares Owned</span><p class="font-semibold text-white text-lg">${userHolding.shares}</p></div>
+                        <div class="flex justify-between py-2"><span class="text-gray-400">Avg. Buy Price</span><p class="font-semibold text-white text-lg">${currencyFormatter.format(avgPrice)}</p></div>
+                        <div class="flex justify-between py-2"><span class="text-gray-400">Profit / Loss</span><p class="font-semibold text-lg ${plColor}">${pl >= 0 ? '+' : ''}${currencyFormatter.format(pl)}</p></div>
+                    `;
+                } else {
+                     elements.userHoldingStats.innerHTML = `<div class="flex justify-between py-2 border-t border-gray-700"><span class="text-gray-400">Shares Owned</span><p class="font-semibold text-white text-lg">0</p></div>`;
+                }
+                
+                // 24h Performance Bar
+                const range24h = artist.stats.high24h - artist.stats.low24h;
+                const currentPositionPercent = range24h > 0 ? Math.max(0, Math.min(100, ((artist.price - artist.stats.low24h) / range24h) * 100)) : 50;
+                elements.low24h.textContent = currencyFormatter.format(artist.stats.low24h);
+                elements.high24h.textContent = currencyFormatter.format(artist.stats.high24h);
+                elements.currentPriceIndicator.style.left = `${currentPositionPercent}%`;
+                
+                elements.allTimeHigh.innerHTML = `<p class="font-semibold text-white">${currencyFormatter.format(artist.stats.allTimeHigh)}</p><p class="text-xs text-red-400">${(((artist.price - artist.stats.allTimeHigh) / artist.stats.allTimeHigh) * 100).toFixed(2)}%</p>`;
+                elements.allTimeLow.innerHTML = `<p class="font-semibold text-white">${currencyFormatter.format(artist.stats.allTimeLow)}</p><p class="text-xs text-green-400">+${(((artist.price - artist.stats.allTimeLow) / artist.stats.allTimeLow) * 100).toFixed(2)}%</p>`;
+                
+                // Social Links
+                elements.socialLinks.innerHTML = `
+                    <a href="${artist.socials.x}" target="_blank" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.46 6c-.77.35-1.6.58-2.46.67.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98-3.56-.18-6.73-1.89-8.84-4.48-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.22-1.95-.55v.05c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.01-.06C3.43 18.2 5.63 19 8.03 19c7.23 0 11.19-6 11.19-11.19v-.5A7.9 7.9 0 0 0 22.46 6z"></path></svg>
+                    </a>
+                    <a href="${artist.socials.instagram}" target="_blank" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>
+                    </a>
+                    <a href="${artist.socials.youtube}" target="_blank" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.1.22-1.9.28-.8.07-1.49.1-2.09.1L15 19c-2.19 0-3.8-.16-4.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L8 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.1-.22 1.9-.28.8-.07 1.49-.1 2.09-.1L15 5c2.19 0 3.8.16 4.83.44.9.25 1.48.83 1.73 1.73z"></path></svg>
+                    </a>`;
+
+                updateChart(artist, document.querySelector('.active-timeframe').dataset.range);
+            };
+
+            const updateAccountSummary = () => {
+                let totalValue = 0;
+                let totalCost = 0;
+                Object.keys(portfolio).forEach(id => {
+                    const holding = portfolio[id];
+                    if (holding.shares > 0) {
+                        const artist = artistsData.find(a => a.id == id);
+                        totalValue += artist.price * holding.shares;
+                        totalCost += holding.totalCost;
+                    }
+                });
+                
+                const totalPL = totalValue - totalCost;
+                const plColor = totalPL >= 0 ? 'text-green-400' : 'text-red-400';
+                elements.accountBalance.textContent = currencyFormatter.format(accountBalance);
+                elements.portfolioValue.textContent = currencyFormatter.format(totalValue);
+                elements.totalPL.textContent = `${totalPL >= 0 ? '+' : ''}${currencyFormatter.format(totalPL)}`;
+                elements.totalPL.className = `font-semibold text-lg ${plColor}`;
+            };
+
+            const updateChart = (artist, range) => {
+                const canvas = elements.stockChart;
+                if (!canvas) return;
+                const dataset = artist.history[range];
+                const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, artist.stats.change24h >= 0 ? 'rgba(74, 222, 128, 0.4)' : 'rgba(248, 113, 113, 0.4)');
+                gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
+
+                if (priceChart) {
+                    priceChart.data.labels = dataset.data.map(d => d.x);
+                    priceChart.data.datasets[0].data = dataset.data;
+                    priceChart.data.datasets[0].borderColor = artist.stats.change24h >= 0 ? '#4ade80' : '#f87171';
+                    priceChart.data.datasets[0].backgroundColor = gradient;
+                    priceChart.options.scales.x.time.unit = dataset.unit;
+                    priceChart.update();
+                } else {
+                    priceChart = new Chart(canvas.getContext('2d'), { type: 'line', data: { datasets: [{ data: dataset.data, borderColor: artist.stats.change24h >= 0 ? '#4ade80' : '#f87171', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: gradient }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: dataset.unit, tooltipFormat: 'MMM d, yyyy HH:mm', displayFormats: { hour: 'HH:mm', day: 'MMM d', month: 'MMM yyyy' } }, grid: { display: false }, ticks: { color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 7 } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', callback: (value) => currencyFormatter.format(value) } } }, plugins: { legend: { display: false }, tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: '#1e293b', padding: 12, cornerRadius: 8, displayColors: false, callbacks: { title: ctx => new Date(ctx[0].label).toLocaleString(), label: ctx => `Price: ${currencyFormatter.format(ctx.raw.y)}` } } } } });
+                }
+            };
+            
+            // --- LOGIC & EVENT HANDLERS ---
+            const selectArtist = (id) => {
+                activeArtistId = id;
+                document.querySelector('#timeframe-controls button[data-range="1D"]').click();
+                renderAll();
+            };
+
+            const openTradeModal = (isBuy) => {
+                if (!activeArtistId) return;
+                const artist = artistsData.find(a => a.id === activeArtistId);
+                elements.modalTitle.textContent = `${isBuy ? 'Buy' : 'Sell'} ${artist.symbol}`;
+                elements.modalBalance.textContent = currencyFormatter.format(accountBalance);
+                elements.modalPrice.textContent = currencyFormatter.format(artist.price);
+                elements.modalShares.textContent = (portfolio[artist.id] && portfolio[artist.id].shares) || 0;
+                elements.tradeAmount.value = '';
+                elements.confirmTrade.textContent = `Confirm ${isBuy ? 'Purchase' : 'Sale'}`;
+                elements.confirmTrade.className = `w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 ${isBuy ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`;
+                elements.confirmTrade.onclick = () => executeTrade(isBuy);
+                handleTradeAmountChange(); // Recalculate costs on modal open
+                elements.tradeModal.classList.remove('hidden');
+            };
+
+            const handleTradeAmountChange = () => {
+                if (!activeArtistId) return;
+                const artist = artistsData.find(a => a.id === activeArtistId);
+                const amount = parseFloat(elements.tradeAmount.value) || 0;
+                const subtotal = amount * artist.price;
+                const fee = Math.min(subtotal * PERCENTAGE_FEE, FLAT_FEE); // Use Math.min for fee cap
+                const isBuy = elements.modalTitle.textContent.startsWith('Buy');
+
+                elements.subTotalCost.textContent = currencyFormatter.format(subtotal);
+                elements.transactionFee.textContent = currencyFormatter.format(fee);
+                elements.totalLabel.textContent = isBuy ? 'Total Debit:' : 'Total Credit:';
+                
+                let totalDisplay;
+                if (amount === 0) {
+                    totalDisplay = 0;
+                } else {
+                    totalDisplay = isBuy ? subtotal + fee : subtotal - fee;
+                }
+                elements.totalCost.textContent = currencyFormatter.format(totalDisplay);
+            };
+
+            const executeTrade = (isBuy) => {
+                const artist = artistsData.find(a => a.id === activeArtistId);
+                const amount = parseInt(elements.tradeAmount.value);
+
+                if (isNaN(amount) || amount <= 0) { showToast("Please enter a valid amount.", true); return; }
+
+                const subtotal = artist.price * amount;
+                const transactionFee = Math.min(subtotal * PERCENTAGE_FEE, FLAT_FEE); // Use Math.min for fee cap
+
+                if (isBuy) {
+                    const totalDebit = subtotal + transactionFee;
+                    if (totalDebit > accountBalance) { showToast("Insufficient funds (including fee).", true); return; }
+                    accountBalance -= totalDebit;
+                    if (!portfolio[artist.id]) portfolio[artist.id] = { shares: 0, totalCost: 0 };
+                    portfolio[artist.id].shares += amount;
+                    portfolio[artist.id].totalCost += subtotal;
+                    updateArtistAfterTrade(artist, amount, true);
+                    showToast(`Successfully bought ${amount} ${artist.symbol} shares.`, false);
+                } else {
+                    if (!portfolio[artist.id] || amount > portfolio[artist.id].shares) { showToast("You don't own enough shares.", true); return; }
+                    const totalCredit = subtotal - transactionFee;
+                    if (totalCredit < 0) { showToast("Transaction fee is higher than sale value.", true); return; }
+                    
+                    const avgPrice = portfolio[artist.id].totalCost / portfolio[artist.id].shares;
+                    accountBalance += totalCredit;
+                    portfolio[artist.id].totalCost -= amount * avgPrice;
+                    portfolio[artist.id].shares -= amount;
+                    updateArtistAfterTrade(artist, amount, false);
+                    showToast(`Successfully sold ${amount} ${artist.symbol} shares.`, false);
+                }
+                elements.tradeModal.classList.add('hidden');
+                renderAll();
+            };
+
+            const updateArtistAfterTrade = (artist, amount, isBuy) => {
+                const priceImpactFactor = Math.log10(amount + 1) * 0.001;
+                const newPrice = artist.price * (isBuy ? (1 + priceImpactFactor) : (1 - priceImpactFactor));
+                
+                const artistIndex = artistsData.findIndex(a => a.id === artist.id);
+                artistsData[artistIndex] = createArtistData(artist.id, artist.name, artist.symbol, newPrice, artist.socials);
+            };
+            
+            const showToast = (message, isError = false) => {
+                elements.toastMessage.textContent = message;
+                elements.toast.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} translate-y-0 opacity-100`;
+                setTimeout(() => {
+                    elements.toast.className = elements.toast.className.replace('translate-y-0 opacity-100', 'translate-y-24 opacity-0');
+                }, 3000);
+            };
+            
+            const renderAll = () => {
+                updateAccountSummary();
+                renderArtistList();
+                renderMyStocks();
+                renderLeaderboard();
+                renderArtistDetails();
+            };
+
+            // --- EVENT LISTENERS ---
+            elements.timeframeControls.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (target && activeArtistId) {
+                    const range = target.dataset.range;
+                    elements.timeframeControls.querySelectorAll('button').forEach(btn => btn.classList.remove('active-timeframe'));
+                    target.classList.add('active-timeframe');
+                    updateChart(artistsData.find(a => a.id === activeArtistId), range);
+                }
+            });
+
+            elements.openBuyModal.addEventListener('click', () => openTradeModal(true));
+            elements.openSellModal.addEventListener('click', () => openTradeModal(false));
+            elements.closeModal.addEventListener('click', () => elements.tradeModal.classList.add('hidden'));
+            elements.tradeAmount.addEventListener('input', handleTradeAmountChange);
+
+            // --- INITIALIZATION ---
+            renderAll();
+        });
+    </script>
+
+</body>
+</html>

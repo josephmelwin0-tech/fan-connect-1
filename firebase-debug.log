@@ -1,0 +1,55 @@
+[debug] [2025-09-04T02:39:10.380Z] ----------------------------------------------------------------------
+[debug] [2025-09-04T02:39:10.383Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Melwin\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-09-04T02:39:10.383Z] CLI Version:   14.15.2
+[debug] [2025-09-04T02:39:10.383Z] Platform:      win32
+[debug] [2025-09-04T02:39:10.383Z] Node Version:  v22.18.0
+[debug] [2025-09-04T02:39:10.383Z] Time:          Thu Sep 04 2025 08:09:10 GMT+0530 (India Standard Time)
+[debug] [2025-09-04T02:39:10.383Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-04T02:39:10.388Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-04T02:39:10.389Z] > authorizing via signed-in user (josephmelwin0@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Melwin\Downloads\artist
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-09-04T02:42:18.954Z] Checked if tokens are valid: true, expires at: 1756957080031
+[debug] [2025-09-04T02:42:18.954Z] Checked if tokens are valid: true, expires at: 1756957080031
+[debug] [2025-09-04T02:42:18.955Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-09-04T02:42:19.955Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-09-04T02:42:19.955Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project engicompass (EngiCompass) 
+[info] 
+=== Firestore Setup
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2025-09-04T04:00:02.905Z] Checked if tokens are valid: false, expires at: 1756957080031
+[debug] [2025-09-04T04:00:02.906Z] Checked if tokens are valid: false, expires at: 1756957080031
+[debug] [2025-09-04T04:00:02.907Z] > refreshing access token with scopes: []
+[debug] [2025-09-04T04:00:02.911Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-04T04:00:02.911Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-04T04:00:03.097Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-04T04:00:03.097Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-04T04:00:03.110Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com [none]
+[debug] [2025-09-04T04:00:03.111Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com x-goog-quota-user=projects/engicompass
+[debug] [2025-09-04T04:00:05.140Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com 200
+[debug] [2025-09-04T04:00:05.141Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com [omitted]
+[warn] !  firestore: missing required API firestore.googleapis.com. Enabling now... 
+[debug] [2025-09-04T04:00:05.143Z] Checked if tokens are valid: true, expires at: 1756962002098
+[debug] [2025-09-04T04:00:05.143Z] Checked if tokens are valid: true, expires at: 1756962002098
+[debug] [2025-09-04T04:00:05.143Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com:enable [none]
+[debug] [2025-09-04T04:00:05.143Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com:enable x-goog-quota-user=projects/engicompass
+[debug] [2025-09-04T04:00:05.770Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com:enable 200
+[debug] [2025-09-04T04:00:05.770Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/engicompass/services/firestore.googleapis.com:enable [omitted]

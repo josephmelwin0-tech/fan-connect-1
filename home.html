@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home • FanConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+      }
+      .glass-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="text-gray-200 antialiased">
+    <div class="flex min-h-screen">
+      <!-- SIDEBAR -->
+      <aside
+        class="w-64 glass-card p-6 flex flex-col justify-between hidden md:flex"
+      >
+        <div>
+          <h1 class="text-2xl font-bold text-white mb-8">FanConnect</h1>
+          <nav class="flex flex-col space-y-4">
+            <a href="home.html" class="text-indigo-400 font-semibold">Home</a>
+            <a href="stock.html" class="hover:text-indigo-400 transition-colors"
+              >Stock Market</a
+            >
+            <a href="rewards.html" id="nav-rewards" class="hover:text-indigo-400"
+              >Rewards</a
+            >
+            <a href="profile.html" class="hover:text-indigo-400 transition-colors"
+              >Profile</a
+            >
+          </nav>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <main class="flex-1 p-6 space-y-8">
+        <!-- TOPBAR -->
+        <div
+          class="glass-card flex items-center justify-between px-6 py-4 mb-6"
+        >
+          <!-- Search -->
+          <div class="flex space-x-2">
+            <input
+              id="search-input"
+              type="text"
+              placeholder="Search artists..."
+              class="px-4 py-2 rounded-lg bg-gray-800/60 text-gray-200 placeholder-gray-500 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              id="search-btn"
+              class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold text-white transition"
+            >
+              Search
+            </button>
+          </div>
+
+          <!-- Wallet & Profile -->
+          <div class="flex items-center space-x-4">
+            <span
+              id="points-badge"
+              class="px-3 py-1 bg-indigo-600 rounded-full font-semibold text-sm"
+              >0 TP</span
+            >
+            <span
+              id="wallet-pill"
+              class="px-4 py-2 bg-green-600 rounded-lg text-sm font-semibold"
+              >Wallet: ₹10,000</span
+            >
+          </div>
+        </div>
+
+        <!-- FEATURED ARTISTS -->
+        <section>
+          <h2 class="text-xl font-bold text-white mb-4">Featured Artists</h2>
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <!-- Hanumankind -->
+            <article
+              onclick="window.location.href='artist.html?id=hanumankind'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://www.rollingstone.com/wp-content/uploads/2024/08/HanuManKind.jpg?w=1581&h=1054&crop=1');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Hanumankind</h3>
+              <p class="text-gray-400 text-sm">Hip Hop</p>
+            </article>
+
+            <!-- Samay Raina -->
+            <article
+              onclick="window.location.href='artist.html?id=samayraina'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://images.indianexpress.com/2025/02/Samay-Raina.jpg');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Samay Raina</h3>
+              <p class="text-gray-400 text-sm">Comedian & Chess Streamer</p>
+            </article>
+
+            <!-- Raghav -->
+            <article
+              onclick="window.location.href='artist.html?id=raghavjuyal'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgjTbDp7dHxMB51zhfk1L6I4-f2tUFHDh1sw&s');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Raghav Juyal</h3>
+              <p class="text-gray-400 text-sm">Dancer & Actor</p>
+            </article>
+
+            <!-- Falguni Nayar -->
+            <article
+              onclick="window.location.href='artist.html?id=falguninayar'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://media.vogue.in/wp-content/uploads/2019/11/Falguni-Nayar.jpg');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Falguni Nayar</h3>
+              <p class="text-gray-400 text-sm">Founder & CEO of Nykaa</p>
+            </article>
+
+            <!-- Manish Malhotra -->
+            <article
+              onclick="window.location.href='artist.html?id=manishmalhotra'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://images.moneycontrol.com/static-mcnews/2021/10/Manish-Malhotra-fashion-designer.jpg?impolicy=website&width=1600&height=900');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Manish Malhotra</h3>
+              <p class="text-gray-400 text-sm">Fashion Designer</p>
+            </article>
+
+            <!-- Sunil Chhetri -->
+            <article
+              onclick="window.location.href='artist.html?id=sunilchhetri'"
+              class="glass-card p-4 hover:scale-105 transition-transform group"
+            >
+              <div
+                class="h-40 rounded-lg bg-cover bg-center mb-4 group-hover:opacity-90 transition"
+                style="
+                  background-image: url('https://akm-img-a-in.tosshub.com/indiatoday/images/story/202406/sunil-chhetri-063740265-16x9_0.jpg?VersionId=JhdJqdJr2MnLiZwIBLvvHCUPjjR30Bjn');
+                "
+              ></div>
+              <h3 class="text-lg font-semibold text-white">Sunil Chhetri</h3>
+              <p class="text-gray-400 text-sm">Professional Footballer</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script>
+        // ---------------- Wallet + Contract Setup ----------------
+        let provider, signer, userAddress, contract;
+
+        // 🔹 Replace with your deployed contract address
+        const contractAddress = "0x4E5D6065cc00eaB640Bc877bA18a2D94be7e0EC4";
+
+        // 🔹 ABI (only what we need)
+        const contractABI = [
+          "function balanceOf(address owner) view returns (uint256)",
+          "function decimals() view returns (uint8)"
+        ];
+
+        // Example conversion rate: 1 TP = ₹2
+        const TP_TO_INR = 2;
+
+        async function connectWallet() {
+          if (!window.ethereum) {
+            alert("MetaMask not detected. Please install it.");
+            return;
+          }
+
+          try {
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            userAddress = await signer.getAddress();
+
+            // Connect to contract
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+            // Fetch and display balance
+            await updateBalance();
+          } catch (err) {
+            console.error(err);
+            alert("Failed to connect wallet");
+          }
+        }
+
+        async function updateBalance() {
+          try {
+            const rawBalance = await contract.balanceOf(userAddress);
+            const decimals = await contract.decimals();
+            const tpBalance = parseFloat(ethers.utils.formatUnits(rawBalance, decimals));
+
+            // Update UI
+            document.getElementById("points-badge").innerText = `${tpBalance} TP`;
+            document.getElementById("wallet-pill").innerText =
+              `Wallet: ₹${(tpBalance * TP_TO_INR).toLocaleString('en-IN')}`;
+          } catch (err) {
+            console.error("Error fetching balance:", err);
+          }
+        }
+
+        // ---------------- Search & UI Logic ----------------
+        function setupSearch() {
+          const searchBtn = document.getElementById("search-btn");
+          const searchInput = document.getElementById("search-input");
+
+          if (searchBtn && searchInput) {
+            const performSearch = () => {
+                const query = searchInput.value.trim().toLowerCase();
+                if (query) {
+                    // In a real app, you would have a search page. Here we'll just check if the query matches an ID.
+                    const validIds = ['hanumankind', 'samayraina', 'raghavjuyal', 'falguninayar', 'manishmalhotra', 'sunilchhetri'];
+                    if (validIds.includes(query)) {
+                         window.location.href = `artist.html?id=${encodeURIComponent(query)}`;
+                    } else {
+                        alert("Artist not found!");
+                    }
+                }
+            };
+            
+            searchBtn.addEventListener("click", performSearch);
+            searchInput.addEventListener("keypress", (event) => {
+                if (event.key === "Enter") {
+                    performSearch();
+                }
+            });
+          }
+        }
+
+        // ---------------- Init ----------------
+        window.addEventListener("load", () => {
+          connectWallet();    // auto-connect MetaMask and fetch balance
+          setupSearch();      // setup artist search
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artist Profile • FanConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+      }
+      .glass-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+      }
+      #toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #00f0ff;
+        color: #000;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        display: none;
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.5);
+        z-index: 999;
+      }
+    </style>
+  </head>
+  <body class="text-gray-200">
+    <!-- HEADER -->
+    <header class="glass-card flex justify-between items-center p-6 mb-6 max-w-4xl mx-auto mt-6">
+      <a href="index.html" class="text-2xl font-bold text-white">FanConnect</a>
+      <div class="flex items-center gap-4">
+        <button
+          id="connectButton"
+          class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold"
+        >
+          Connect Wallet
+        </button>
+        <span>Wallet: <span id="walletAddress">Not connected</span></span>
+        <span>Balance: <span id="tokenBalance">-</span> TPC</span>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-4xl mx-auto space-y-8">
+      <!-- Artist Info -->
+      <section class="glass-card p-6 text-center">
+        <img
+          id="artistImage"
+          class="w-40 h-40 rounded-full mx-auto mb-4 object-cover"
+          src=""
+          alt="Artist"
+        />
+        <h2 id="artistName" class="text-2xl font-bold text-white mb-2">
+          Artist Name
+        </h2>
+        <p id="artistDesc" class="text-gray-400 mb-4">Artist description</p>
+        <!-- Social Links -->
+        <div class="flex justify-center gap-4">
+          <a href="#" id="twitterLink" class="text-blue-400 hover:text-blue-300">🐦 X</a>
+          <a href="#" id="instaLink" class="text-pink-400 hover:text-pink-300">📸 Instagram</a>
+          <a href="#" id="ytLink" class="text-red-500 hover:text-red-400">▶ YouTube</a>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="glass-card p-6 text-center">
+        <h3 class="text-xl font-semibold mb-4">Engage with Artist</h3>
+        <div class="flex justify-center gap-6 mb-4">
+          <button
+            onclick="showVideo()"
+            class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg font-semibold"
+          >
+            Watch Video
+          </button>
+          <button
+            onclick="showQuiz()"
+            class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold"
+          >
+            Take Quiz
+          </button>
+        </div>
+        <div id="videoSection" style="display: none">
+          <video
+            controls
+            id="video_player"
+            class="w-full max-w-lg mx-auto rounded-lg"
+          >
+            <source src="" type="video/mp4" />
+          </video>
+        </div>
+        <div id="quizSection" style="display: none">
+          <form id="quizForm" class="space-y-4"></form>
+        </div>
+      </section>
+
+      <!-- Stock Info -->
+      <section class="glass-card p-6">
+        <h3 class="text-xl font-semibold mb-2">📈 Stock Info</h3>
+        <p id="stockInfo" class="text-gray-400">
+          This artist’s fan stock is currently trending up!
+        </p>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+      // ---------------- CONFIG ----------------
+      const contractAddress = "0x4E5D6065cc00eaB640Bc877bA18a2D94be7e0EC4";
+      const contractABI = [
+        "function balanceOf(address owner) view returns (uint256)",
+        "function decimals() view returns (uint8)",
+        "function mint(address to, uint256 amount)",
+        "function burn(uint256 amount)",
+      ];
+      let provider, signer, contract, account;
+      let lastTime = 0;
+
+      // ---------------- ARTISTS DATA ----------------
+      const artistData = {
+        hanumankind: {
+          name: "Hanumankind",
+          desc: "Hip Hop Artist",
+          img: "https://www.rollingstone.com/wp-content/uploads/2024/08/HanuManKind.jpg?w=1581&h=1054&crop=1",
+          twitter: "#",
+          insta: "#",
+          yt: "#",
+          video: "promo1.mp4",
+          quiz: [
+            { question: "What is he famous for?", options: ["Rap", "Jazz", "Metal"], correct: "Rap" },
+            { question: "Where is he from?", options: ["Mumbai", "Delhi", "Bangalore"], correct: "Bangalore" },
+          ],
+        },
+        samayraina: {
+          name: "Samay Raina",
+          desc: "Comedian & Chess Streamer",
+          img: "https://images.indianexpress.com/2025/02/Samay-Raina.jpg",
+          twitter: "#",
+          insta: "#",
+          yt: "#",
+          video: "promo3.mp4",
+          quiz: [
+            { question: "Samay Raina is famous for?", options: ["Chess", "Singing", "Painting"], correct: "Chess" },
+            { question: "Comedy style?", options: ["Standup", "Dance", "Acting"], correct: "Standup" },
+          ],
+        },
+        raghavjuyal: {
+          name: "Raghav Juyal",
+          desc: "Dancer & Actor",
+          img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgjTbDp7dHxMB51zhfk1L6I4-f2tUFHDh1sw&s",
+          twitter: "#",
+          insta: "#",
+          yt: "#",
+          video: "promo4.mp4",
+          quiz: [
+            { question: "Raghav is known for?", options: ["Dance", "Singing", "Acting"], correct: "Dance" },
+            { question: "Nickname?", options: ["King of Slow Motion", "Fast Feet", "Jump Master"], correct: "King of Slow Motion" },
+          ],
+        },
+        falguninayar: {
+            name: "Falguni Nayar",
+            desc: "Founder & CEO of Nykaa",
+            img: "https://media.vogue.in/wp-content/uploads/2019/11/Falguni-Nayar.jpg",
+            twitter: "https://twitter.com/MyNykaa",
+            insta: "https://www.instagram.com/falguninayar/",
+            yt: "https://www.youtube.com/c/nykaa",
+            video: "promo.mp4",
+            quiz: [
+                { question: "Falguni Nayar is the founder of which successful beauty and wellness company?", options: ["Myntra", "Nykaa", "Purplle"], correct: "Nykaa" },
+                { question: "Before founding her own company, Falguni Nayar had a long career in which sector?", options: ["Investment Banking", "Fashion Design", "Medicine"], correct: "Investment Banking" },
+            ],
+        },
+        manishmalhotra: {
+            name: "Manish Malhotra",
+            desc: "Fashion Designer",
+            img: "https://images.moneycontrol.com/static-mcnews/2021/10/Manish-Malhotra-fashion-designer.jpg?impolicy=website&width=1600&height=900",
+            twitter: "https://twitter.com/ManishMalhotra",
+            insta: "https://www.instagram.com/manishmalhotra05/",
+            yt: "https://www.youtube.com/c/ManishMalhotra",
+            video: "promo.mp4",
+            quiz: [
+                { question: "Manish Malhotra is primarily known for his work in which field?", options: ["Acting", "Music Composition", "Costume Design"], correct: "Costume Design" },
+                { question: "In 1998, he ventured into mainstream designing and launched his high-profile couture label. What is it called?", options: ["Sabyasachi", "Manish Malhotra", "Ritu Kumar"], correct: "Manish Malhotra" },
+            ],
+        },
+        sunilchhetri: {
+            name: "Sunil Chhetri",
+            desc: "Professional Footballer",
+            img: "https://akm-img-a-in.tosshub.com/indiatoday/images/story/202406/sunil-chhetri-063740265-16x9_0.jpg?VersionId=JhdJqdJr2MnLiZwIBLvvHCUPjjR30Bjn",
+            twitter: "https://twitter.com/chetrisunil11",
+            insta: "https://www.instagram.com/chetri_sunil11/",
+            yt: "https://www.youtube.com/channel/UCG1Dyv8hQNjBUWeS_a23f-Q",
+            video: "promo.mp4",
+            quiz: [
+                { question: "What nickname is Sunil Chhetri popularly known by?", options: ["Captain Fantastic", "The Wall", "Master Blaster"], correct: "Captain Fantastic" },
+                { question: "Sunil Chhetri holds the record for the most goals scored for which national team?", options: ["Brazil", "Argentina", "India"], correct: "India" },
+            ],
+        },
+      };
+
+      // Get artist from URL
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id") || "hanumankind";
+      const currentArtist = artistData[id];
+
+      if (currentArtist) {
+        document.getElementById("artistName").innerText = currentArtist.name;
+        document.getElementById("artistDesc").innerText = currentArtist.desc;
+        document.getElementById("artistImage").src = currentArtist.img;
+        document.getElementById("twitterLink").href = currentArtist.twitter;
+        document.getElementById("instaLink").href = currentArtist.insta;
+        document.getElementById("ytLink").href = currentArtist.yt;
+        document.querySelector("#video_player source").src = currentArtist.video;
+        document.getElementById("video_player").load();
+      } else {
+        document.querySelector('main').innerHTML = `<div class="text-center text-white p-10 text-xl">Artist not found</div>`;
+      }
+
+      // ---------------- UI LOGIC ----------------
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.style.display = "block";
+        setTimeout(() => (t.style.display = "none"), 2500);
+      }
+
+      async function connectWallet() {
+        if (!window.ethereum) {
+            showToast("MetaMask not detected!");
+            return;
+        }
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        account = await signer.getAddress();
+        document.getElementById("walletAddress").innerText = account.substring(0,6) + '...' + account.substring(account.length - 4);
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        await updateBalance();
+        showToast("Wallet connected!");
+      }
+
+      async function updateBalance() {
+        if (!contract || !account) return;
+        const raw = await contract.balanceOf(account);
+        const dec = await contract.decimals();
+        document.getElementById("tokenBalance").innerText =
+          ethers.utils.formatUnits(raw, dec);
+      }
+
+      async function mintTokens(amount) {
+        if(!contract || !account) {
+            showToast("Please connect your wallet first.");
+            return;
+        }
+        const dec = await contract.decimals();
+        const tx = await contract.mint(
+          account,
+          ethers.utils.parseUnits(amount.toString(), dec)
+        );
+        await tx.wait();
+        await updateBalance();
+      }
+
+      // ---------------- VIDEO ----------------
+      function showVideo() {
+        if (!currentArtist || !currentArtist.video) {
+            showToast("No video available for this artist.");
+            return;
+        }
+        document.getElementById("videoSection").style.display = "block";
+        document.getElementById("quizSection").style.display = "none";
+        const v = document.getElementById("video_player");
+
+        v.addEventListener("timeupdate", () => {
+          if (v.currentTime - lastTime > 1.5) { // Allow for small skips
+              v.currentTime = lastTime;
+          } else {
+              lastTime = v.currentTime;
+          }
+        });
+
+        v.addEventListener("ended", async () => {
+          showToast("Video complete! Minting 10 TPC...");
+          try {
+            await mintTokens(10);
+            showToast("🎉 You earned 10 TPC!");
+          } catch (err) {
+            console.error(err);
+            showToast("❌ Mint failed");
+          }
+        });
+      }
+
+      // ---------------- QUIZ ----------------
+      function showQuiz() {
+        document.getElementById("quizSection").style.display = "block";
+        document.getElementById("videoSection").style.display = "none";
+        const form = document.getElementById("quizForm");
+        form.innerHTML = "";
+        const quizQuestions = currentArtist.quiz;
+        quizQuestions.forEach((q, i) => {
+          const div = document.createElement("div");
+          div.className = "text-left max-w-md mx-auto";
+          div.innerHTML =
+            `<p class="font-semibold mb-2"><strong>Q${i + 1}:</strong> ${q.question}</p>` +
+            q.options
+              .map(
+                (opt) =>
+                  `<label class="flex items-center space-x-3 mb-2 cursor-pointer"><input type="radio" name="q${i}" value="${opt}" class="form-radio h-4 w-4 text-indigo-600"> <span class="text-gray-300">${opt}</span></label>`
+              )
+              .join("");
+          form.appendChild(div);
+        });
+        form.innerHTML += `<button type="submit" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg mt-4 font-semibold">Submit</button>`;
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          if(!account) {
+            showToast("Please connect wallet to claim rewards.");
+            return;
+          }
+          if (localStorage.getItem(`quizClaimed_${account}_${id}`)) {
+            showToast("⚠ Already claimed for this artist.");
+            return;
+          }
+          let correct = true;
+          quizQuestions.forEach((q, i) => {
+            const sel = form.querySelector(`input[name="q${i}"]:checked`);
+            if (!sel || sel.value !== q.correct) correct = false;
+          });
+          if (correct) {
+            showToast("✅ Correct! Minting 15 TPC...");
+            try {
+              await mintTokens(15);
+              localStorage.setItem(`quizClaimed_${account}_${id}`, "true");
+              showToast("🎉 You earned 15 TPC!");
+              form.style.display = "none";
+            } catch (err) {
+              console.error(err);
+              showToast("❌ Mint failed");
+            }
+          } else showToast("❌ Wrong answers. Try again!");
+        };
+      }
+
+      document.getElementById("connectButton").onclick = connectWallet;
+    </script>
+  </body>
+</html>

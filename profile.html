@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 3. Babel to transpile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* A little extra style to ensure a smooth dark mode experience */
+        body {
+            background-color: #0D1117;
+        }
+        .modal-content {
+            transition: all 0.2s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- The React app will be rendered here -->
+    <div id="root"></div>
+
+    <!-- The entire React application is inside this script tag -->
+    <script type="text/babel">
+        // --- Component: Card ---
+        function Card({ children, className = "" }) {
+            return (
+                <div
+                    className={[
+                        "rounded-2xl",
+                        "border border-[#30363d]",
+                        "bg-[#161B22]",
+                        "shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
+                        "p-6",
+                        className,
+                    ].join(" ")}
+                >
+                    {children}
+                </div>
+            );
+        }
+
+        // --- Main Component: UserProfile ---
+        function UserProfile() {
+            const { useState, useEffect } = React;
+
+            // Updated Avatars with a more illustrative style
+            const defaultAvatar = "https://api.dicebear.com/8.x/adventurer/svg?seed=billy";
+            const availableAvatars = [
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Mimi',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Bandit',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Sheba',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Rocky',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Coco',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Peanut',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Leo',
+                'https://api.dicebear.com/8.x/adventurer/svg?seed=Luna',
+            ];
+
+            const [editing, setEditing] = useState(false);
+            const [showWallet, setShowWallet] = useState(false);
+            const [showImgZoom, setShowImgZoom] = useState(false);
+            const [showAvatarModal, setShowAvatarModal] = useState(false);
+            
+            const [name, setName] = useState("billy");
+            const [bio, setBio] = useState("Passionate learner and content creator.");
+            const [avatarUrl, setAvatarUrl] = useState(defaultAvatar);
+
+            const [tempName, setTempName] = useState(name);
+            const [tempBio, setTempBio] = useState(bio);
+
+            const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const fireEmoji = "🔥";
+            const badges = ["🤪 Top Viewer", "😳 Goal Achiever"];
+            const streakDays = [true, true, false, true, false, true, true];
+            
+            const artistStocksInitial = [
+                { id: 1, name: "hanumankind", stocks: 100, change: +12 },
+                { id: 2, name: "samay raina", stocks: 50, change: -7 },
+                { id: 3, name: "raghav juyal", stocks: 80, change: +5 },
+            ];
+            const [artistStocks, setArtistStocks] = useState(artistStocksInitial);
+
+            const walletTransactions = [
+                { id: 1, description: "Bought stocks: samay +50", amount: -500 },
+                { id: 2, description: "Wallet top-up", amount: +10000 },
+                { id: 3, description: "Sold stocks: raghav -80", amount: +800 },
+            ];
+
+            const getInitials = (name) =>
+                name
+                ? name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                : "?";
+
+            const handleSaveProfile = () => {
+                setName(tempName);
+                setBio(tempBio);
+                setEditing(false);
+            };
+
+            return (
+                <div className="min-h-screen bg-[#0D1117] text-slate-100">
+                    <div
+                        onClick={() => setShowWallet(true)}
+                        className="fixed top-4 right-4 px-4 py-2 rounded-full border border-[#30363d] bg-[#161B22] text-slate-100 shadow hover:bg-[#1f2937] flex items-center space-x-2 z-50 cursor-pointer transition"
+                    >
+                        💰 <span className="font-semibold">Wallet: 10,000/-</span>
+                    </div>
+
+                    {/* --- Wallet Modal --- */}
+                    {showWallet && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                            <div className={`modal-content w-full max-w-md relative ${showWallet ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+                                <Card>
+                                    <h3 className="text-xl font-bold mb-4">Wallet Transactions</h3>
+                                    <button
+                                        onClick={() => setShowWallet(false)}
+                                        className="absolute -top-2 -right-2 size-8 rounded-full bg-gray-800 hover:bg-gray-700 text-slate-200"
+                                    > × </button>
+                                    <ul className="divide-y divide-gray-800 max-h-64 overflow-y-auto">
+                                        {walletTransactions.map(({ id, description, amount }) => (
+                                            <li key={id} className="py-3 flex justify-between text-sm text-slate-300">
+                                                <span>{description}</span>
+                                                <span className={`font-semibold ${amount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                                    {amount >= 0 ? "+" : ""}{amount}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* --- Avatar Selection Modal --- */}
+                    {showAvatarModal && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                            <div className={`modal-content w-full max-w-lg relative ${showAvatarModal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+                                <Card>
+                                    <h3 className="text-xl font-bold mb-6">Choose Your Avatar</h3>
+                                    <button onClick={() => setShowAvatarModal(false)} className="absolute -top-2 -right-2 size-8 rounded-full bg-gray-800 hover:bg-gray-700 text-slate-200">×</button>
+                                    <div className="grid grid-cols-4 gap-4">
+                                        {availableAvatars.map((url, index) => (
+                                            <img 
+                                                key={index}
+                                                src={url}
+                                                alt={`Avatar ${index + 1}`}
+                                                className="w-24 h-24 rounded-full object-cover cursor-pointer ring-2 ring-transparent hover:ring-indigo-500 transition-all duration-200 bg-gray-700"
+                                                onClick={() => {
+                                                    setAvatarUrl(url);
+                                                    setShowAvatarModal(false);
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
+
+
+                    <div className="max-w-6xl mx-auto px-4 py-14">
+                        {/* --- Profile Header Card --- */}
+                        <div className="p-0.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-gray-800">
+                            <Card className="p-8">
+                                <div className="flex flex-col sm:flex-row items-center gap-6">
+                                    <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
+                                        <img
+                                            src={avatarUrl}
+                                            alt="Profile"
+                                            className="w-28 h-28 rounded-full object-cover ring-2 ring-[#30363d] transition-transform group-hover:scale-105 bg-gray-700"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 w-full">
+                                        {!editing ? (
+                                            <>
+                                                <h1 className="text-3xl font-semibold">{name}</h1>
+                                                <p className="text-slate-300 mt-1">{bio}</p>
+                                                <p className="text-xs text-slate-500 mt-2">Joined September 2025</p>
+                                            </>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                <input type="text" className="w-full p-2 rounded-lg bg-[#0D1117] border border-[#30363d] text-slate-100" value={tempName} onChange={(e) => setTempName(e.target.value)} />
+                                                <textarea rows={3} className="w-full p-2 rounded-lg bg-[#0D1117] border border-[#30363d] text-slate-100" value={tempBio} onChange={(e) => setTempBio(e.target.value)} />
+                                            </div>
+                                        )}
+                                        <div className="mt-5 flex justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    if (editing) handleSaveProfile();
+                                                    else {
+                                                        setTempName(name);
+                                                        setTempBio(bio);
+                                                        setEditing(true);
+                                                    }
+                                                }}
+                                                className="px-4 py-2 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold transition"
+                                            >
+                                                {editing ? "Save Profile" : "Edit Profile"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+
+
+                        {showImgZoom && (
+                            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]" onClick={() => setShowImgZoom(false)}>
+                                <img src={avatarUrl} alt="Profile zoom" className="max-w-full max-h-full rounded-xl shadow-2xl"/>
+                            </div>
+                        )}
+
+                        <div className="mt-8">
+                            <h2 className="text-2xl font-semibold mb-4">Badges</h2>
+                            <div className="flex flex-wrap gap-3">
+                                {badges.map((badge, i) => (
+                                    <div key={i} className="px-4 py-2 rounded-full border border-[#30363d] bg-[#161B22] text-slate-200">
+                                        {badge}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6 mt-6">
+                            <Card>
+                                <h3 className="text-lg mb-4 font-semibold">Streak</h3>
+                                <div className="flex justify-center gap-3 text-2xl">
+                                    {weekdays.map((day, i) => (
+                                        <div key={day} className="flex flex-col items-center" title={`${day}: ${streakDays[i] ? "Active" : "Inactive"}`}>
+                                            <div className={streakDays[i] ? "opacity-100" : "opacity-30"}> {fireEmoji} </div>
+                                            <span className="text-xs mt-1 text-slate-400">{day}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+
+                            <Card>
+                                <h3 className="text-lg font-semibold mb-4">Your Stocks</h3>
+                                <ul className="space-y-2">
+                                    {artistStocks.map(({ id, name, stocks, change }) => (
+                                        <li key={id} className="flex justify-between px-2 py-2 rounded-lg hover:bg-[#0D1117] transition-colors duration-200 shadow-lg shadow-transparent hover:shadow-indigo-500/10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-[#30363d] flex items-center justify-center"> {getInitials(name)} </div>
+                                                <span>{name}</span>
+                                            </div>
+                                            <span className={`${change >= 0 ? "text-emerald-400" : "text-rose-400"} font-semibold`}>
+                                                {stocks} ({change >= 0 ? "+" : ""}{change}%)
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </Card>
+                        </div>
+                        
+                        <div className="mt-10 flex gap-4">
+                            <button className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 transition">🚪 Logout</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Render the App ---
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<UserProfile />);
+
+    </script>
+</body>
+</html>

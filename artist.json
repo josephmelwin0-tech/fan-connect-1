@@ -1,0 +1,44 @@
+[
+  {
+    "id": "hanumankind",
+    "name": "Hanumankind",
+    "ticker": "HNK",
+    "byline": "Rapper & Hip-Hop Artist",
+    "image": "https://i.scdn.co/image/ab6761610000e5eb9a3d97d2d9d2687b2d3e0c21",
+    "price": 120.5,
+    "change": "+2.3%",
+    "low24": 115.0,
+    "high24": 125.8,
+    "alltimehigh": 180.0,
+    "alltimelow": 50.0,
+    "bio": "Hanumankind is an emerging hip-hop artist from India, known for his energetic rap, international collaborations, and unique sound that blends Indian identity with global hip-hop culture."
+  },
+  {
+    "id": "samayraina",
+    "name": "Samay Raina",
+    "ticker": "SMY",
+    "byline": "Comedian & Chess Streamer",
+    "image": "https://i.ytimg.com/vi/8h5T6WwHyrk/maxresdefault.jpg",
+    "price": 75.2,
+    "change": "-1.4%",
+    "low24": 73.0,
+    "high24": 79.0,
+    "alltimehigh": 120.0,
+    "alltimelow": 40.0,
+    "bio": "Samay Raina is a stand-up comedian and popular chess streamer, known for reviving chess in India through his streams and collaborations with grandmasters."
+  },
+  {
+    "id": "raghavjuyal",
+    "name": "Raghav Juyal",
+    "ticker": "RGV",
+    "byline": "Dancer & Actor",
+    "image": "https://img.etimg.com/thumb/msid-107575962,width-650,height-488,imgsize-36520,resizemode-75/raghav-juyal.jpg",
+    "price": 98.7,
+    "change": "+0.8%",
+    "low24": 95.0,
+    "high24": 102.0,
+    "alltimehigh": 150.0,
+    "alltimelow": 60.0,
+    "bio": "Raghav Juyal, also known as the 'King of Slow Motion', is a dancer, choreographer, and actor famous for his unique dance style and appearances in films and reality shows."
+  }
+]

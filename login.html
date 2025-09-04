@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanConnect - Where Fandom Becomes an Asset</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- three.js for 3D Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+      /* Floating label behavior */
+.input-container {
+    position: relative;
+}
+
+.input-container input:focus + label,
+.input-container input:not(:placeholder-shown) + label {
+    transform: scale(0.85) translateY(-1.2rem);
+    color: #6366f1; /* Indigo-400 */
+}
+
+.input-container label {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    color: #9ca3af;
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+}
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+        }
+        /* Canvas for 3D background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place it behind all content */
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+        }
+        /* Remove the static background gradient, as it's replaced by the canvas */
+        .hero-bg {
+             background-image: none;
+        }
+        /* Animation for elements scrolling into view */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-slate-900/50 backdrop-blur-lg border-b border-slate-800">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.6 15.18C16.14 15.65 15.53 15.94 14.82 15.94C13.88 15.94 13.1 15.18 13.1 14.22V9.78C13.1 8.82 13.88 8.06 14.82 8.06C15.53 8.06 16.14 8.35 16.6 8.82L17.5 9.72L18.4 8.82C18.86 8.35 19.47 8.06 20.18 8.06C21.12 8.06 21.9 8.82 21.9 9.78V14.22C21.9 15.18 21.12 15.94 20.18 15.94C19.47 15.94 18.86 15.65 18.4 15.18L17.5 14.28L16.6 15.18ZM7.4 15.18C6.94 15.65 6.33 15.94 5.62 15.94C4.68 15.94 3.9 15.18 3.9 14.22V9.78C3.9 8.82 4.68 8.06 5.62 8.06C6.33 8.06 6.94 8.35 7.4 8.82L8.5 9.9L7.4 11V15.18Z" fill="url(#logo-gradient)"/>
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#8B5CF6"/>
+                            <stop offset="1" stop-color="#4F46E5"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="text-xl font-bold text-white">FanConnect</span>
+            </a>
+            <!-- Navigation -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-slate-300 hover:text-white transition-colors">Features</a>
+                <a href="#how-it-works" class="text-slate-300 hover:text-white transition-colors">How It Works</a>
+            </nav>
+            <!-- Login Button -->
+            <button id="loginBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-lg transition-colors">
+    Login
+</button>
+
+        </div>
+    </header>
+    <!-- Login Form Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black/60 flex items-center justify-center hidden z-50">
+    <div class="glass-card max-w-md w-full p-10 shadow-xl relative">
+        <button id="closeLogin" class="absolute top-4 right-4 text-slate-300 hover:text-white text-2xl">&times;</button>
+        <h1 class="text-3xl font-bold text-white mb-8 text-center">Welcome Back</h1>
+        <form id="loginForm" class="space-y-8">
+            <div class="input-container relative">
+                <input type="email" id="email" placeholder=" " required
+                    class="w-full rounded-xl bg-gray-800/70 px-4 pt-6 pb-2 border border-gray-700 focus:border-indigo-500 outline-none transition"/>
+                <label for="email" class="absolute left-4 top-4 text-gray-400 transition-all pointer-events-none">Email Address</label>
+            </div>
+            <div class="input-container relative">
+                <input type="password" id="password" placeholder=" " required
+                    class="w-full rounded-xl bg-gray-800/70 px-4 pt-6 pb-2 border border-gray-700 focus:border-indigo-500 outline-none transition"/>
+                <label for="password" class="absolute left-4 top-4 text-gray-400 transition-all pointer-events-none">Password</label>
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 transition rounded-xl py-3 text-white font-semibold shadow-lg">
+                Log In
+            </button>
+        </form>
+        <div class="mt-8 text-center text-gray-400 text-sm">
+            Don’t have an account?
+            <a href="signup.html" class="text-indigo-400 font-semibold hover:underline">Sign up</a>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-bg pt-40 pb-24 px-6 text-center min-h-screen flex items-center justify-center">
+            <div class="container mx-auto">
+                <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight">
+                    Where Fandom Becomes an Asset
+                </h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-300">
+                    Engage with your favorite creators, earn exclusive points for your support, and invest in their success. FanConnect is the new creator economy, powered by you.
+                </p>
+                <div class="mt-10">
+                    <a href="signup.html" class="bg-white text-indigo-700 font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-slate-200 transition-all transform hover:scale-105">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 px-6">
+            <div class="container mx-auto">
+                <div class="text-center mb-12 reveal">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">The Future of Fan Engagement</h2>
+                    <p class="mt-4 max-w-xl mx-auto text-slate-400">A revolutionary platform built on transparency and true ownership.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Feature Card 1 -->
+                    <div class="glass-card p-8 reveal">
+                        <h3 class="text-xl font-bold text-white mb-3">True Ownership</h3>
+                        <p class="text-slate-400">Buy and sell artist stocks on a decentralized platform. Your investment is verifiably yours, secured on the blockchain.</p>
+                    </div>
+                    <!-- Feature Card 2 -->
+                    <div class="glass-card p-8 reveal" style="transition-delay: 200ms;">
+                        <h3 class="text-xl font-bold text-white mb-3">Reward Your Passion</h3>
+                        <p class="text-slate-400">The more you engage with content, the more you earn. Your fandom has real-world value that you can convert and invest.</p>
+                    </div>
+                    <!-- Feature Card 3 -->
+                    <div class="glass-card p-8 reveal" style="transition-delay: 400ms;">
+                        <h3 class="text-xl font-bold text-white mb-3">Directly Support Creators</h3>
+                        <p class="text-slate-400">Your investment provides artists with the resources they need to grow, creating a powerful, win-win ecosystem.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="py-20 px-6 bg-slate-900/50">
+            <div class="container mx-auto">
+                <div class="text-center mb-12 reveal">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">Get Started in 3 Simple Steps</h2>
+                </div>
+                <div class="grid md:grid-cols-3 gap-12 text-center">
+                    <!-- Step 1 -->
+                    <div class="reveal">
+                        <div class="text-5xl mb-4 text-indigo-400">1</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Engage & Connect</h3>
+                        <p class="text-slate-400">Watch videos, take quizzes, and interact with artists to show your support and earn engagement points.</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="reveal" style="transition-delay: 200ms;">
+                        <div class="text-5xl mb-4 text-indigo-400">2</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Cash Out Points</h3>
+                        <p class="text-slate-400">Convert your earned points into real wallet money at a fixed rate, secured by smart contracts.</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="reveal" style="transition-delay: 400ms;">
+                        <div class="text-5xl mb-4 text-indigo-400">3</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Invest & Grow</h3>
+                        <p class="text-slate-400">Use your wallet balance to buy shares of the artists you believe in and become a part of their success story.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 mt-20">
+        <div class="container mx-auto px-6 py-8 text-center text-slate-400">
+            <p>&copy; 2025 FanConnect. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 3D Background Animation ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const objects = [];
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            
+            for (let i = 0; i < 300; i++) {
+                const material = new THREE.MeshStandardMaterial({ color: 0x4F46E5, roughness: 0.6, metalness: 0.2 });
+                const cube = new THREE.Mesh(geometry, material);
+                
+                cube.position.x = (Math.random() - 0.5) * 20;
+                cube.position.y = (Math.random() - 0.5) * 20;
+                cube.position.z = (Math.random() - 0.5) * 20;
+
+                cube.rotation.x = Math.random() * 2 * Math.PI;
+                cube.rotation.y = Math.random() * 2 * Math.PI;
+
+                objects.push(cube);
+                scene.add(cube);
+            }
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            camera.position.z = 5;
+
+            // Animate function
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                objects.forEach(obj => {
+                    obj.rotation.x += 0.005;
+                    obj.rotation.y += 0.005;
+                });
+
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            // Handle scroll animation for camera
+            window.addEventListener('scroll', () => {
+                const scrollPosition = window.scrollY;
+                const totalHeight = document.body.scrollHeight - window.innerHeight;
+                const scrollFraction = scrollPosition / totalHeight;
+                camera.position.z = 5 - scrollFraction * 10;
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+
+            // --- Scroll-reveal animation for content ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal').forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+        apiKey: "AIzaSyC30XlQkYNhfu6WMhRzXAucCIfeu0cVKQs",
+        authDomain: "fanconnect-test.firebaseapp.com",
+        projectId: "fanconnect-test",
+        storageBucket: "fanconnect-test.firebasestorage.app",
+        messagingSenderId: "1098129813046",
+        appId: "1:1098129813046:web:542634e063bc8992e67297"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Hardcoded users
+    const users = {
+        "melwin@example.com": { password: "alice123", docId: "user1" },
+        "spa@example.com": { password: "bob123", docId: "user2" },
+        "harshi@test.com": { password: "carol123", docId: "user3" },
+    };
+
+    async function login(email, password) {
+        const user = users[email];
+        if (!user || user.password !== password) {
+            alert("❌ Invalid email or password");
+            return;
+        }
+
+        const docRef = doc(db, "users", user.docId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            localStorage.setItem("loggedInUser", JSON.stringify(docSnap.data()));
+            window.location.href = "home.html";
+        } else {
+            alert("❌ User data not found in Firestore");
+        }
+    }
+
+    // Modal logic
+    const loginBtn = document.getElementById('loginBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeLogin = document.getElementById('closeLogin');
+    const loginForm = document.getElementById('loginForm');
+
+    loginBtn.addEventListener('click', () => loginModal.classList.remove('hidden'));
+    closeLogin.addEventListener('click', () => loginModal.classList.add('hidden'));
+    loginModal.addEventListener('click', e => { if (e.target === loginModal) loginModal.classList.add('hidden'); });
+
+    loginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        login(email, password);
+    });
+</script>
+
+</body>
+</html>
